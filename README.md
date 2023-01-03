@@ -30,7 +30,7 @@ $$
 
 where $\mathcal{O}\equiv\{1,\delta_{L},\delta_{L}^{2},s_{L}^{2},\nabla^{2}\delta_{L}\}$ is the full set of operators. $P_{\alpha \beta}(k)$ is the power spectrum of the fields $\alpha$ and $\beta$ and $b_{\alpha}$ are the corresponding bias coefficients. $P_{11}(k)$ is the non-linear matter power spectrum, and its corresponding bias parameter is $b_{0}=1$.
 
-## To Do
+### To Do
 
 - (MWE - Simulation) Gibbs sampling mechanism.
 - (MWE - Simulation) Vary cosmological parameters as well.
