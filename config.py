@@ -5,7 +5,6 @@ Email: arrykrish@gmail.com
 Project: Inference of bias parameters.
 Script: The main configuration file
 """
-import os
 from ml_collections.config_dict import ConfigDict
 
 
@@ -24,9 +23,6 @@ def get_config() -> ConfigDict:
 
     # paths
     config.path = path = ConfigDict()
-    os.makedirs('data', exist_ok=True)
-    os.makedirs('plots', exist_ok=True)
-    os.makedirs('logs', exist_ok=True)
     path.data = 'data/'
     path.plots = 'plots/'
     path.logs = 'logs/'
@@ -43,7 +39,7 @@ def get_config() -> ConfigDict:
     # bias parameters
     config.bias = bias = ConfigDict()
     bias.names = ['b0', 'b1', 'b2', 'bs', 'bn']
-    bias.distribution = 'normal'
+    bias.distribution = 'norm'
     bias.loc = [1.0, 1.5, 2.0, 2.5, 3.0]
     bias.scale = [0.5, 0.5, 0.5, 0.5, 0.5]
     bias.fiducial = [1.0, 1.5, 2.0, 2.5, 3.0]

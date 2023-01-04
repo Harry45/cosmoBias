@@ -31,18 +31,14 @@ def class_compute(config: ConfigDict, cosmology: dict) -> Class:
         arg_params['sigma8'] = sigma_eight(arg_neutrino | arg_params)
         del arg_params['S_8']
 
-    print(arg_class)
-    print(arg_neutrino)
-    print(arg_params)
-
     # Run Class
-    # class_module = Class()
-    # class_module.set(arg_class)
-    # class_module.set(arg_neutrino)
-    # class_module.set(arg_params)
-    # class_module.compute()
+    class_module = Class()
+    class_module.set(arg_class)
+    class_module.set(arg_neutrino)
+    class_module.set(arg_params)
+    class_module.compute()
 
-    # return class_module
+    return class_module
 
 
 def delete_module(class_module: Class):
