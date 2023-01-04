@@ -31,14 +31,23 @@ def get_config() -> ConfigDict:
     path.plots = 'plots/'
     path.logs = 'logs/'
 
-    # parameters
-    config.parameters = parameters = ConfigDict()
-    parameters.names = ['omega_cdm', 'omega_b', 'S_8', 'n_s', 'h']
-    parameters.distribution = 'uniform'
-    parameters.loc = [0.051, 0.019, 0.10, 0.84, 0.64]
-    parameters.scale = [0.204, 0.007, 1.20, 0.26, 0.18]
-    parameters.fiducial = [0.12, 0.020, 0.76, 1.0, 0.70]
-    parameters.nparams = len(parameters.names)
+    # cosmological parameters
+    config.cosmo = cosmo = ConfigDict()
+    cosmo.names = ['omega_cdm', 'omega_b', 'S_8', 'n_s', 'h']
+    cosmo.distribution = 'uniform'
+    cosmo.loc = [0.051, 0.019, 0.10, 0.84, 0.64]
+    cosmo.scale = [0.204, 0.007, 1.20, 0.26, 0.18]
+    cosmo.fiducial = [0.12, 0.020, 0.76, 1.0, 0.70]
+    cosmo.nparams = len(cosmo.names)
+
+    # bias parameters
+    config.bias = bias = ConfigDict()
+    bias.names = ['b0', 'b1', 'b2', 'bs', 'bn']
+    bias.distribution = 'normal'
+    bias.loc = [1.0, 1.5, 2.0, 2.5, 3.0]
+    bias.scale = [0.5, 0.5, 0.5, 0.5, 0.5]
+    bias.fiducial = [1.0, 1.5, 2.0, 2.5, 3.0]
+    bias.nparams = len(bias.names)
 
     # CLASS settings
     config.classy = classy = ConfigDict()
@@ -58,7 +67,7 @@ def get_config() -> ConfigDict:
     config.grid = grid = ConfigDict()
     grid.kmin = 1E-4
     grid.kmax = 5.0
-    grid.nk = 40
+    grid.nk = 100
     grid.zmin = 0.0
     grid.zmax = 3.0
     grid.nz = 20

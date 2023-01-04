@@ -27,9 +27,13 @@ def class_compute(config: ConfigDict, cosmology: dict) -> Class:
     arg_neutrino = neutrino_args(config)
     arg_params = params_args(config, cosmology)
 
-    if 'S_8' in config.parameters.names:
+    if 'S_8' in config.cosmo.names:
         arg_params['sigma8'] = sigma_eight(arg_neutrino | arg_params)
         del arg_params['S_8']
+
+    print(arg_class)
+    print(arg_neutrino)
+    print(arg_params)
 
     # Run Class
     # class_module = Class()

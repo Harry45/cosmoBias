@@ -50,14 +50,14 @@ def params_args(config: ConfigDict, values: dict) -> dict:
     Returns:
         dict: a dictionary, with the approximate keys and values
     """
-    assert len(values) == len(config.parameters.names), 'Mis-match in shape'
+    assert len(values) == len(config.cosmo.names), 'Mis-match in shape'
 
     dictionary = dict()
-    for name in config.parameters.names:
+    for name in config.cosmo.names:
         if name not in ['M_tot']:
             dictionary[name] = values[name]
 
-    if 'c_min' not in config.parameters.names:
+    if 'c_min' not in config.cosmo.names:
         dictionary['c_min'] = config.classy.cmin
 
     return dictionary
