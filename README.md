@@ -32,7 +32,8 @@ where $\mathcal{O}\equiv\{1,\delta_{L},\delta_{L}^{2},s_{L}^{2},\nabla^{2}\delta
 
 ### To Do
 
-- (MWE - Simulation) Gibbs sampling mechanism.
-- (MWE - Simulation) Vary cosmological parameters as well.
-- Own MH or HMC sampler.
-- Can try EMCEE as well.
+- Rewrite code in PyTorch
+- Routine for kernel interpolation - important for interpolating power spectrum and drawing bias samples in the Gibbs step.
+- Routine for emulating the Matter Power Spectrum at a fixed redshift, $z=0$.
+- Routine for sampling the bias parameters (Gibbs)
+- Routine for sampling the cosmological parameters (HMC)
