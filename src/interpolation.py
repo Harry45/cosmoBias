@@ -20,21 +20,10 @@ def gaussian_kernel(arr1: torch.Tensor, arr2: torch.Tensor, hyperparam: float) -
     Returns:
         torch.Tensor: the Gaussian kernel.
     """
-    size_a = arr1.shape[0]
-    size_b = arr2.shape[0]
-
-    # divide by the characteristic lengthscale
     arr1 = arr1 / hyperparam
     arr2 = arr2 / hyperparam
-
-    # calculate term squared
-    sqr_a = torch.sum(torch.pow(arr1, 2), 1, keepdim=True)
-    sqr_b = torch.sum(torch.pow(arr2, 2), 1, keepdim=True)
-
-    sqr_a = sqr_a.expand(size_a, size_b)
-    sqr_b = sqr_b.expand(size_a, size_b).t()
-
-    # calculate pairwise distance
+    sqr_a = torch.sum(torch.pow(arr1, 2), 1, keepdim=True).expand(arr1.shape[0], arr2.shape[0])
+    sqr_b = torch.sum(torch.pow(arr2, 2), 1, keepdim=True).expand(arr2.shape[0], arr1.shape[0]).t()
     dist = sqr_a - 2 * torch.mm(arr1, arr2.t()) + sqr_b
     return torch.exp(-0.5 * dist)
 
@@ -69,7 +58,7 @@ class KernelInterpolation:
 
     def __init__(self, domain: torch.Tensor, target: torch.Tensor, hyperparam: float = 1.0):
 
-        self.domain = domain.view(1, -1)
+        self.domain = domain.view(-1, 1)
         self.target = target.view(-1, 1)
         self.hyperparam = hyperparam
         self.alpha = compute_alpha(self.domain, self.target, self.hyperparam)
@@ -83,6 +72,7 @@ class KernelInterpolation:
         Returns:
             torch.Tensor: _description_
         """
+        xtest = xtest.view(-1, 1)
         k_star = gaussian_kernel(self.domain, xtest, self.hyperparam)
         y_pred = k_star.t() @ self.alpha
-        return y_pred
+        return y_pred.view(-1)
