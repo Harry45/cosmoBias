@@ -8,7 +8,7 @@ import os
 import logging
 from ml_collections.config_dict import ConfigDict
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def create_init(path: str):
@@ -17,7 +17,8 @@ def create_init(path: str):
     Args:
         path (str): path where we want to create the init file.
     """
-    with open(path + "__init__.py", "w+") as file:
+    file = os.path.join(path, '__init__.py')
+    with open(file, "w+") as file:
         file.write('import os')
 
 
@@ -26,12 +27,7 @@ def make_paths(config: ConfigDict) -> None:
     Args:
         config (ConfigDict): the main configuration file.
     """
-    logger.info('Checking if all paths exist.')
-
-    os.makedirs(config.path.data, exist_ok=True)
-    os.makedirs(config.path.plots, exist_ok=True)
-    os.makedirs(config.path.logs, exist_ok=True)
-
-    create_init(config.path.data)
-    create_init(config.path.plots)
-    create_init(config.path.logs)
+    LOGGER.info('Checking if all paths exist.')
+    for path in list(config.path):
+        os.makedirs(path, exist_ok=True)
+        create_init(path)

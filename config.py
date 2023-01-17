@@ -20,19 +20,34 @@ def get_config() -> ConfigDict:
     # boolean settings
     config.boolean = boolean = ConfigDict()
     boolean.linearpk = False
+    boolean.xtrans = True
+    boolean.ytrans = True
+
+    # plotting settings
+    config.plot = plot = ConfigDict()
+    plot.fontsize = 20
+
+    # emulator settings
+    config.emu = emu = ConfigDict()
+    emu.nlhs = 1000
+    emu.jitter = 1E-10
+    emu.lr = 0.01
+    emu.nrestart = 2
+    emu.niter = 1000
 
     # paths
     config.path = path = ConfigDict()
     path.data = 'data/'
     path.plots = 'plots/'
     path.logs = 'logs/'
+    path.gps = 'gps/'
 
     # cosmological parameters
     config.cosmo = cosmo = ConfigDict()
     cosmo.names = ['omega_cdm', 'omega_b', 'S_8', 'n_s', 'h']
     cosmo.distribution = 'uniform'
-    cosmo.loc = [0.051, 0.019, 0.10, 0.84, 0.64]
-    cosmo.scale = [0.204, 0.007, 1.20, 0.26, 0.18]
+    cosmo.loc = [0.051, 0.019, 0.40, 0.84, 0.64]
+    cosmo.scale = [0.204, 0.007, 0.70, 0.26, 0.18]
     cosmo.fiducial = [0.12, 0.020, 0.76, 1.0, 0.70]
     cosmo.nparams = len(cosmo.names)
 
@@ -52,8 +67,8 @@ def get_config() -> ConfigDict:
     classy.output = "mPk"
     classy.mode = 'hmcode'
     classy.cmin = 3.13
-    # classy.bbn = '/home/harry/Desktop/class/bbn/sBBN.dat'
-    classy.bbn = '/home/mootovaloo/Desktop/class/external/bbn/sBBN.dat'
+    classy.bbn = '/home/harry/Desktop/class/bbn/sBBN.dat'
+    # classy.bbn = '/home/mootovaloo/Desktop/class/external/bbn/sBBN.dat'
     classy.k_pivot = 0.05
     classy.Omega_k = 0.0
     classy.k_max_pk = 50
@@ -63,7 +78,7 @@ def get_config() -> ConfigDict:
     config.grid = grid = ConfigDict()
     grid.kmin = 1E-4
     grid.kmax = 5.0
-    grid.nk = 100
+    grid.nk = 40
     grid.zmin = 0.0
     grid.zmax = 3.0
     grid.nz = 20
