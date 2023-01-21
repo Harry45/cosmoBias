@@ -5,6 +5,24 @@ Email: arrykrish@gmail.com
 Project: Inference of bias parameters.
 """
 import torch
+import numpy as np
+import scipy.interpolate as itp
+
+
+def spline_interpolate(inputs: np.ndarray, outputs: np.ndarray, new_inputs: np.ndarray) -> np.ndarray:
+    """Performs a spline interpolation along the wavenumber axis
+
+    Args:
+        inputs (np.ndarray): the input wavenumber
+        outputs (np.ndarray): the power spectrum, gradient or hessian
+        new_inputs (np.ndarray): the new values of wavenumbers
+
+    Returns:
+        np.ndarray: the interpolated function
+    """
+    spline = itp.splrep(inputs, outputs)
+    ynew = itp.splev(new_inputs, spline)
+    return ynew
 
 
 def gaussian_kernel(arr1: torch.Tensor, arr2: torch.Tensor, hyperparam: float) -> torch.Tensor:

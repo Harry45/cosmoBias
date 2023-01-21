@@ -6,6 +6,7 @@ Project: Inference of bias parameters.
 """
 import os
 import logging
+import numpy as np
 from ml_collections.config_dict import ConfigDict
 
 LOGGER = logging.getLogger(__name__)
@@ -31,3 +32,18 @@ def make_paths(config: ConfigDict) -> None:
     for path in list(config.path):
         os.makedirs(path, exist_ok=True)
         create_init(path)
+
+
+def check_wavenumbers(config: ConfigDict, wavenumbers: np.ndarray):
+    """Ensure that the wavenumbers are within the range, as specified in the configuration file.
+
+    Args:
+        config (ConfigDict): the main configuration file with all the settings.
+        wavenumbers (np.ndarray): the new wavenumbers
+    """
+    kmax_log = np.log(config.grid.kmax + 1E-5)
+    kmin_log = np.log(config.grid.kmin - 1E-5)
+    cond_min = np.all(wavenumbers >= kmin_log)
+    cond_max = np.all(wavenumbers <= kmax_log)
+    msg = f'Wavenumbers should be in log (base e) and between {config.grid.kmin} and {config.grid.kmax}'
+    assert cond_min and cond_max, msg
