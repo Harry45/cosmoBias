@@ -29,7 +29,8 @@ def make_paths(config: ConfigDict) -> None:
         config (ConfigDict): the main configuration file.
     """
     LOGGER.info('Checking if all paths exist.')
-    for path in list(config.path):
+    paths = dict(config.path)
+    for path in paths.values():
         os.makedirs(path, exist_ok=True)
         create_init(path)
 

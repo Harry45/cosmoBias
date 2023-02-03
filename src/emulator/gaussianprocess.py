@@ -33,7 +33,7 @@ class GaussianProcess(tr.PreWhiten):
         self.ytrain = outputs.view(-1, 1)
         self.jitter = config.emu.jitter
         self.xtrans = config.boolean.xtrans
-        self.ytrans = config.boolean.ytrans
+        self.ytrans = config.boolean.uselog
 
         # get the dimensions of the inputs
         self.ndata, self.ndim = inputs.shape
@@ -52,10 +52,15 @@ class GaussianProcess(tr.PreWhiten):
             self.xtrain = inputs
 
         if self.ytrans:
-            ylog = torch.log(self.ytrain)
-            self.ymean = torch.mean(ylog)
-            self.ystd = torch.std(ylog)
-            self.ytrain = (ylog - self.ymean) / self.ystd
+            ytrain = torch.log(self.ytrain)
+
+        else:
+            print('Not using log transformation')
+            ytrain = self.ytrain
+
+        self.ymean = torch.mean(ytrain)
+        self.ystd = torch.std(ytrain)
+        self.ytrain = (ytrain - self.ymean) / self.ystd
 
     def cost(self, parameters: torch.tensor) -> torch.tensor:
         """Calculates the negative log-likelihood of the GP, for fitting the kernel hyperparameters.
@@ -74,7 +79,8 @@ class GaussianProcess(tr.PreWhiten):
         kernel = kernel + torch.eye(self.xtrain.shape[0]) * self.jitter
 
         # compute the chi2 and log-determinant of the kernel matrix
-        log_marginal = -0.5 * self.ytrain.t() @ kn.solve(kernel, self.ytrain) - 0.5 * kn.logdeterminant(kernel)
+        log_marginal = -0.5 * self.ytrain.t() @ kn.solve(kernel, self.ytrain) - \
+            0.5 * kn.logdeterminant(kernel)
 
         return -log_marginal
 
@@ -97,7 +103,8 @@ class GaussianProcess(tr.PreWhiten):
         for i in range(nrestart):
 
             # make a copy of the original parameters and perturb it
-            params = torch.randn(parameters.shape)  # parameters.clone() + torch.randn(parameters.shape) * 0.1
+            # parameters.clone() + torch.randn(parameters.shape) * 0.1
+            params = torch.randn(parameters.shape)
 
             # make sure we are differentiating with respect to the parameters
             params.requires_grad = True
@@ -125,13 +132,15 @@ class GaussianProcess(tr.PreWhiten):
             dictionary[i] = {"parameters": params, "loss": record_loss}
 
         # get the dictionary for which the loss is the lowest
-        self.d_opt = dictionary[np.argmin([dictionary[i]["loss"][-1] for i in range(nrestart)])]
+        self.d_opt = dictionary[np.argmin(
+            [dictionary[i]["loss"][-1] for i in range(nrestart)])]
 
         # store the optimised parameters as well
         self.opt_parameters = self.d_opt["parameters"]
 
         # compute the kernel and store it
-        self.kernel_matrix = kn.compute(self.xtrain, self.xtrain, self.opt_parameters.data)
+        self.kernel_matrix = kn.compute(
+            self.xtrain, self.xtrain, self.opt_parameters.data)
 
         # also compute K^-1 y and store it
         self.alpha = kn.solve(self.kernel_matrix, self.ytrain)
@@ -180,7 +189,8 @@ class GaussianProcess(tr.PreWhiten):
         if order == 1:
             return gradient[0]
 
-        hessian = torch.autograd.functional.hessian(self.mean_prediction, testpoint)
+        hessian = torch.autograd.functional.hessian(
+            self.mean_prediction, testpoint)
         return gradient[0], hessian
 
     def prediction(self, testpoint: torch.tensor,
@@ -203,14 +213,18 @@ class GaussianProcess(tr.PreWhiten):
         k_star = kn.compute(self.xtrain, testpoint, self.opt_parameters.data)
         mean = k_star.t() @ self.alpha
 
+        # shift the mean back
+        mean = mean * self.ystd + self.ymean
         if self.ytrans:
-            mean = torch.exp(mean * self.ystd + self.ymean)
+            mean = torch.exp(mean)
 
         if variance:
-            k_star_star = kn.compute(testpoint, testpoint, self.opt_parameters.data)
+            k_star_star = kn.compute(
+                testpoint, testpoint, self.opt_parameters.data)
             var = k_star_star - k_star.t() @ kn.solve(self.kernel_matrix, k_star)
             if self.ytrans:
                 var = (self.ystd * mean) ** 2 * var
+            else:
+                var = self.std**2 * var
             return mean, var
-
         return mean

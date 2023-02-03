@@ -6,6 +6,8 @@
 import os
 import logging
 import torch
+from typing import Tuple
+import numpy as np
 import matplotlib.pylab as plt
 from ml_collections import ConfigDict
 
@@ -16,6 +18,36 @@ from .gaussianprocess import GaussianProcess
 plt.rc("text", usetex=True)
 plt.rc("font", **{"family": "sans-serif", "serif": ["Palatino"]})
 LOGGER = logging.getLogger(__name__)
+
+
+def compression(config: ConfigDict, inputs: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Application of Singular Value Decomposition to the cosmological parameters.
+
+    Args:
+        config (ConfigDict): the main configuration file with all the settings.
+        inputs (np.ndarray): the set of input cosmological parameters.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray, np.ndarray]: U, D, VT in the SVD notations.
+    """
+    LOGGER.info('Applying SVD to the input training points.')
+    assert inputs.shape[0] > inputs.shape[1], 'Ntrain > Nwavenumber'
+    u_matrix, d_matrix, v_matrix_transpose = np.linalg.svd(
+        inputs, full_matrices=False)
+
+    u_selected = u_matrix[:, 0:config.svd.ncomponents]
+    d_selected = np.diag(d_matrix[0:config.svd.ncomponents])
+    v_selected = v_matrix_transpose[0:config.svd.ncomponents]
+
+    # save the different components
+    hp.save_pkl(u_selected, 'data/svd', 'u_component')
+    hp.save_pkl(d_selected, 'data/svd', 'd_component')
+    hp.save_pkl(v_selected, 'data/svd', 'v_component')
+
+    LOGGER.info('Shape of U is %s', u_selected.shape)
+    LOGGER.info('Shape of D is %s', d_selected.shape)
+    LOGGER.info('Shape of V is %s', v_selected.shape)
+    return u_selected, d_selected, v_selected
 
 
 def plot_loss(config: ConfigDict, optim: dict, fname: str, save: bool = True):
@@ -67,10 +99,17 @@ def train_gps(config: ConfigDict) -> list:
     else:
         fname = 'pk_non_lhs_' + str(nlhs)
     outputs = hp.load_pkl("data", fname)
+
+    if config.boolean.svd:
+        outputs, d_selected, v_selected = compression(config, outputs)
+        ngps = config.svd.ncomponents
+    else:
+        ngps = config.grid.nk
+
     ins = torch.from_numpy(inputs.values)
     gps = list()
 
-    for i in range(config.grid.nk):
+    for i in range(ngps):
 
         LOGGER.info('Training GP: %d', i)
         out = torch.from_numpy(outputs[:, i])

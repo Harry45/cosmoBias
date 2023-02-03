@@ -27,7 +27,11 @@ def load_gps(config: ConfigDict) -> list:
     """
     gps = list()
     path = os.path.join(config.path.gps, str(config.emu.nlhs))
-    for i in range(config.grid.nk):
+    if config.boolean.svd:
+        ngps = config.svd.ncomponents
+    else:
+        ngps = config.grid.nk
+    for i in range(ngps):
         trained_gp = load_pkl(path, f'pk_non_lhs_1000_wave_{i}')
         gps.append(trained_gp)
     return gps
@@ -47,7 +51,8 @@ def interpolate_pk(predictions: np.ndarray, wavenumbers: np.ndarray, config: Con
 
     check_wavenumbers(config, wavenumbers)
     grid_k = np.geomspace(config.grid.kmin, config.grid.kmax, config.grid.nk)
-    pred_new = spline_interpolate(np.log(grid_k), np.log(predictions), wavenumbers)
+    pred_new = spline_interpolate(
+        np.log(grid_k), np.log(predictions), wavenumbers)
     pred_new = np.exp(pred_new)
     return pred_new
 
@@ -67,7 +72,8 @@ def interpolate_gradients(gradients: np.ndarray, wavenumbers: np.ndarray, config
     grid_k = np.geomspace(config.grid.kmin, config.grid.kmax, config.grid.nk)
     grad_new = np.zeros((wavenumbers.shape[0], config.cosmo.nparams))
     for i in range(config.cosmo.nparams):
-        grad_new[:, i] = spline_interpolate(np.log(grid_k), gradients[:, i], wavenumbers)
+        grad_new[:, i] = spline_interpolate(
+            np.log(grid_k), gradients[:, i], wavenumbers)
     return grad_new
 
 
@@ -84,10 +90,12 @@ def interpolate_hessian(hessian: np.ndarray, wavenumbers: np.ndarray, config: Co
     """
     check_wavenumbers(config, wavenumbers)
     grid_k = np.geomspace(config.grid.kmin, config.grid.kmax, config.grid.nk)
-    hessian_new = np.zeros((wavenumbers.shape[0], config.cosmo.nparams, config.cosmo.nparams))
+    hessian_new = np.zeros(
+        (wavenumbers.shape[0], config.cosmo.nparams, config.cosmo.nparams))
     for i in range(config.cosmo.nparams):
         for j in range(config.cosmo.nparams):
-            hessian_new[:, i, j] = spline_interpolate(np.log(grid_k), hessian[:, i, j], wavenumbers)
+            hessian_new[:, i, j] = spline_interpolate(
+                np.log(grid_k), hessian[:, i, j], wavenumbers)
     return hessian_new
 
 
@@ -102,6 +110,14 @@ class GPcalculations:
         self.cfg = config
         self.gps = load_gps(self.cfg)
 
+        if self.cfg.boolean.svd:
+            self.d_component = load_pkl('data/svd', 'd_component')
+            self.v_component = load_pkl('data/svd', 'v_component')
+            self.phi = self.v_component.T @ self.d_component
+            self.ngps = self.cfg.svd.ncomponents
+        else:
+            self.ngps = self.cfg.grid.nk
+
     def mean_prediction(self, testpoint: torch.Tensor, wavenumbers: np.ndarray = None) -> np.ndarray:
         """Calculate the mean prediction of the power spectrum
 
@@ -112,9 +128,13 @@ class GPcalculations:
         Returns:
             np.ndarray: either the original values of power spectrum or the the interpolated ones
         """
-        pred = np.zeros(self.cfg.grid.nk)
-        for i in range(self.cfg.grid.nk):
+
+        pred = np.zeros(self.ngps)
+        for i in range(self.ngps):
             pred[i] = self.gps[i].prediction(testpoint).view(-1).item()
+
+        if self.cfg.boolean.svd:
+            pred = self.phi @ pred
 
         if wavenumbers is not None:
             pred_new = interpolate_pk(pred, wavenumbers, self.cfg)
@@ -136,21 +156,29 @@ class GPcalculations:
 
             N is the number of wavenumbers and p is the number of parameters.
         """
-        grad = np.zeros((self.cfg.grid.nk, self.cfg.cosmo.nparams))
-        hessian = np.zeros((self.cfg.grid.nk, self.cfg.cosmo.nparams, self.cfg.cosmo.nparams))
+        nparams = self.cfg.cosmo.nparams
+
+        grad = np.zeros((self.ngps, nparams))
+        hessian = np.zeros((self.ngps, nparams, nparams))
 
         if order == 1:
 
-            for i in range(self.cfg.grid.nk):
+            for i in range(self.ngps):
                 grad[i] = self.gps[i].derivatives(testpoint, order).view(-1)
+            if self.cfg.boolean.svd:
+                grad = self.phi @ grad
 
             if wavenumbers is not None:
                 grad_new = interpolate_gradients(grad, wavenumbers, self.cfg)
                 return grad_new
             return grad
 
-        for i in range(self.cfg.grid.nk):
+        for i in range(self.ngps):
             grad[i], hessian[i] = self.gps[i].derivatives(testpoint, order)
+
+        if self.cfg.boolean.svd:
+            grad = self.phi @ grad
+            hessian = np.einsum('ij,jkl->ikl', self.phi, hessian)
 
         if wavenumbers is not None:
             grad_new = interpolate_gradients(grad, wavenumbers, self.cfg)

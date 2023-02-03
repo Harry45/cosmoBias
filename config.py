@@ -21,7 +21,8 @@ def get_config() -> ConfigDict:
     config.boolean = boolean = ConfigDict()
     boolean.linearpk = False
     boolean.xtrans = True
-    boolean.ytrans = True
+    boolean.uselog = False
+    boolean.svd = True
 
     # plotting settings
     config.plot = plot = ConfigDict()
@@ -38,16 +39,22 @@ def get_config() -> ConfigDict:
     # paths
     config.path = path = ConfigDict()
     path.data = 'data/'
-    path.plots = 'plots/'
     path.logs = 'logs/'
-    path.gps = 'gps/'
+    path.plots = 'plots/svd/' if boolean.svd else 'plots/'
+    path.gps = 'gps/svd/' if boolean.svd else 'gps/'
+
+    # SVD
+    config.svd = svd = ConfigDict()
+    svd.ncomponents = 10
 
     # cosmological parameters
     config.cosmo = cosmo = ConfigDict()
     cosmo.names = ['omega_cdm', 'omega_b', 'S_8', 'n_s', 'h']
     cosmo.distribution = 'uniform'
-    cosmo.loc = [0.051, 0.019, 0.40, 0.84, 0.64]
-    cosmo.scale = [0.204, 0.007, 0.70, 0.26, 0.18]
+    # [0.051, 0.019, 0.40, 0.84, 0.64]
+    cosmo.loc = [0.10, 0.019, 0.60, 0.90, 0.65]
+    # [0.204, 0.007, 0.70, 0.26, 0.18]
+    cosmo.scale = [0.05, 0.007, 0.20, 0.20, 0.20]
     cosmo.fiducial = [0.12, 0.020, 0.76, 1.0, 0.70]
     cosmo.nparams = len(cosmo.names)
 
@@ -67,8 +74,8 @@ def get_config() -> ConfigDict:
     classy.output = "mPk"
     classy.mode = 'hmcode'
     classy.cmin = 3.13
-    classy.bbn = '/home/harry/Desktop/class/bbn/sBBN.dat'
-    # classy.bbn = '/home/mootovaloo/Desktop/class/external/bbn/sBBN.dat'
+    # classy.bbn = '/home/harry/Desktop/class/bbn/sBBN.dat'
+    classy.bbn = '/home/mootovaloo/Desktop/class/external/bbn/sBBN.dat'
     classy.k_pivot = 0.05
     classy.Omega_k = 0.0
     classy.k_max_pk = 50
